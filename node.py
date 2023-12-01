@@ -4,7 +4,7 @@ import colorsys
 MAX_VALUE = 20
 EMPTY_COLOR = "#F7F7F7"
 INITIAL_NODES = 2
-OFFSET = 100
+OFFSET = 40
 NODE_COLOR = "#00ff9c"
 
 
