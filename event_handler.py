@@ -1,7 +1,9 @@
 import colorsys
 import random
+import time
 import tkinter
 import tkinter.ttk
+from node import node
 
 MAX_VALUE = 10
 EMPTY_COLOR = "#F7F7F7"
@@ -12,6 +14,11 @@ OFFSET = 30
 # TODO : {Show game over on screen} Done
 # TODO : Add a new Reset Button
 # TODO : Store High Score
+
+def make_empty(enode: node):
+    enode.value = 0
+    enode.itemconfig(enode.num, text="")
+    enode.config(bg=EMPTY_COLOR)
 
 
 def calc_color(value):
@@ -41,63 +48,13 @@ def calc_color(value):
     return new_hex_color
 
 
-class node(tkinter.Canvas):
-    def __init__(self, x=0, y=0, value=0, empty=0):
-        super().__init__()
-        self.pos = (x, y)
-        self.posx, self.posy = self.pos
-        self.config(width=100, height=100, borderwidth=0, highlightthickness=0, bg=EMPTY_COLOR)
-        self.value = value
-        self.setpos(self.posx, self.posy)
-        self.changed_curr_pass = False
-        self.num = self.create_text(50, 50, text="", fill="black", font=("ARIEL", 15, "bold"))
-        if not empty:
-            self.change_color(self.value)
-            self.itemconfig(self.num, text=value)
-
-    def increment_val(self):
-        if not self.value:
-            self.value += 1
-        self.value *= 2
-        self.change_val(self.value)
-        self.change_color(self.value)
-        return self.value
-
-    def change_val(self, value):
-        self.change_color(self.value)
-        self.itemconfig(self.num, text=value)
-
-    def setpos(self, px, py):
-        self.place(x=px * 101 + 1, y=(py * 101) + 1 + OFFSET)
-
-    def change_color(self, value):
-        col = calc_color(value)
-        self.config(bg=col)
-
-    def __repr__(self):
-        return f"{self.value = }, {self.pos = }"
-
-    def __str__(self):
-        return f"{self.value = }, {self.pos = }"
-
-
-def make_empty(enode: node):
-    enode.value = 0
-    enode.itemconfig(enode.num, text="")
-    enode.config(bg=EMPTY_COLOR)
-
-
 class event_handler:
-    def __init__(self):
+    def __init__(self, window):
         self.score = 0
-        canvasmain = tkinter.Canvas(width=404, height=404)
-        canvasmain.place(x=0, y=OFFSET)
-        for i in range(1, 4):
-            canvasmain.create_line(101 * i, 0, 101 * i, 404)  # VERT
-            canvasmain.create_line(0, (101 * i), 404, (101 * i))  # HOR
-            pass
-
-        canvasmain.create_line(0, 1, 404, 1)
+        self.window = window
+        self.canvasmain = tkinter.Canvas(width=404, height=404)
+        self.canvasmain.place(x=0, y=OFFSET)
+        self.drawlines()
         self.nodes = [[node(x=i, y=j, empty=True) for i in range(4)] for j in range(4)]
 
         self.scoretext = tkinter.Label(text=f"Score : {self.score}", font=("ariel", 10, "bold"))
@@ -105,7 +62,14 @@ class event_handler:
 
         for i in range(INITIAL_NODES):
             self.choose_rand_available()
-
+    
+    def drawlines(self):
+        for i in range(1, 4):
+            self.canvasmain.create_line(101 * i, 0, 101 * i, 404)  # VERT
+            self.canvasmain.create_line(0, (101 * i), 404, (101 * i))  # HOR
+        self.canvasmain.create_line(0, 1, 404, 1)
+        
+    
     def choose_rand_available(self):
         visited = []
         while True:
@@ -224,6 +188,7 @@ class event_handler:
                 # merge
                 if shifted.value == current.value:
                     finalpos = self.nodes[j][i + k]
+                    self.moveanimate(current, finalpos)
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -232,6 +197,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j][i + k - 1]
+                        self.moveanimate(current, finalpos)
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -239,6 +205,7 @@ class event_handler:
                 # shift
                 else:
                     finalpos = self.nodes[j][i + k - 1]
+                    self.moveanimate(current, finalpos)
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -265,6 +232,7 @@ class event_handler:
 
                 if shifted.value == current.value:
                     finalpos = self.nodes[j][i - k]
+                    self.moveanimate(current, finalpos)
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -273,6 +241,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j][i - k + 1]
+                        self.moveanimate(current, finalpos)
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -280,6 +249,7 @@ class event_handler:
 
                 else:
                     finalpos = self.nodes[j][i - k + 1]
+                    self.moveanimate(current, finalpos)
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -306,6 +276,7 @@ class event_handler:
 
                 if shifted.value == current.value:
                     finalpos = self.nodes[j + k][i]
+                    self.moveanimate(current, finalpos)
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -314,6 +285,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j + k - 1][i]
+                        self.moveanimate(current, finalpos)
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -321,6 +293,7 @@ class event_handler:
 
                 else:
                     finalpos = self.nodes[j + k - 1][i]
+                    self.moveanimate(current, finalpos)
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -347,6 +320,7 @@ class event_handler:
 
                 if shifted.value == current.value:
                     finalpos = self.nodes[j - k][i]
+                    self.moveanimate(current, finalpos)
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -355,6 +329,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j - k + 1][i]
+                        self.moveanimate(current, finalpos)
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -362,6 +337,7 @@ class event_handler:
 
                 else:
                     finalpos = self.nodes[j - k + 1][i]
+                    self.moveanimate(current, finalpos)
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -371,3 +347,36 @@ class event_handler:
         u, d = self.check_valid_move("u"), self.check_valid_move("d")
         l, r = self.check_valid_move("l"), self.check_valid_move("r")
         return u or d or l or r
+
+    def moveanimate(self, startpos: node, endpos: node, merge=0):
+        startx, starty = startpos.pos
+        startx *= 101
+        starty *= 101
+        endx, endy = endpos.pos
+        endy *= 101
+        endx *= 101
+        ix, iy = startx, starty
+
+        print(starty, startx, endx, endy)
+
+        if startx != endx:
+            # shift hor
+            while ix != endx:
+                time.sleep(0.000001)
+                # if startx < endx then add or else subtract
+                ix = ix + (1 if startx <= endx else -1)
+                startpos.place(x=ix, y=endy + OFFSET)
+                self.window.update()
+        else:
+            # shift vert
+            while iy != endy:
+                time.sleep(0.000001)
+                # if startx < endx then add or else subtract
+                iy = iy + (1 if starty <= endy else -1)
+                startpos.place(x=startx, y=iy + OFFSET)
+                self.window.update()
+
+        print(startx, startx + (startx % 100), starty)
+
+        startpos.place(x=startx + 1, y=starty + OFFSET + 1)
+        self.drawlines()
