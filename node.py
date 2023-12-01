@@ -1,20 +1,15 @@
 import tkinter
 import colorsys
 
-MAX_VALUE = 10
+MAX_VALUE = 20
 EMPTY_COLOR = "#F7F7F7"
 INITIAL_NODES = 2
-OFFSET = 30
-
-
-# TODO : {Show game over on screen} Done
-# TODO : Add a new Reset Button
-# TODO : Store High Score
-
+OFFSET = 100
+NODE_COLOR = "#00ff9c"
 
 
 def calc_color(value):
-    hex_color = "#00ff9c"
+    hex_color = NODE_COLOR
     factor = 0
 
     while value > 1:

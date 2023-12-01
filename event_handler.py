@@ -4,12 +4,8 @@ import tkinter
 import tkinter.ttk
 from threading import Thread
 
-from node import node
+from node import node, EMPTY_COLOR, INITIAL_NODES, OFFSET
 
-MAX_VALUE = 10
-EMPTY_COLOR = "#F7F7F7"
-INITIAL_NODES = 2
-OFFSET = 30
 ANIMATION_SPEED = 0.000001
 STEP_SIZE = 2
 
@@ -77,7 +73,6 @@ class event_handler:
                 if (i, j) not in visited:
                     visited.append((i, j))
                 if len(visited) == 16:
-                    print("All Nodes Visited")
                     return False
 
     def check_valid_move(self, direction):
@@ -138,10 +133,11 @@ class event_handler:
 
         if not self.check_valid_move(direction):
             if not self.check_all_moves():
-                self.scoretext.config(text=f"GAME OVER! FINAL SCORE : {self.score}")
-                print(f"GAME OVER \nScore : {self.score}")
+                self.scoretext.config(text=f"GAME OVER!  FINAL SCORE : {self.score}")
                 return False
             return False
+
+        self.move_animating = True
 
         if direction == "r":
             self.move_right()
@@ -151,6 +147,8 @@ class event_handler:
             self.move_down()
         elif direction == "u":
             self.move_up()
+
+        self.move_animating = False
 
         self.choose_rand_available()
 
@@ -341,7 +339,7 @@ class event_handler:
         l, r = self.check_valid_move("l"), self.check_valid_move("r")
         return u or d or l or r
 
-    def moveanimate(self, startpos: node, endpos: node, merge=0):
+    def moveanimate(self, startpos: node, endpos: node):
         startx, starty = (i * 101 for i in startpos.pos)
         endx, endy = (i * 101 for i in endpos.pos)
         ix, iy = startx, starty

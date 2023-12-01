@@ -1,6 +1,6 @@
-from tkinter import *
-from event_handler import event_handler
-from event_handler import OFFSET
+from tkinter import Tk
+from event_handler import event_handler, OFFSET
+
 
 if __name__ == '__main__':
     gwind = Tk()
