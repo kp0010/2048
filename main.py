@@ -9,22 +9,6 @@ if __name__ == '__main__':
 
     event_handler = event_handler(gwind)
 
-
     gwind.tkraise()
-
-    # def make_move(event):
-    #     binds = {"a": "left", "d": "right", "w": "up", "s": "down"}
-    #     key = event.keysym.lower()
-    #     if key in binds.keys():
-    #         direction = binds[key][:1]
-    #         event_handler.make_move(direction)
-    #     elif key in binds.values():
-    #         direction = key[:1]
-    #         event_handler.make_move(direction)
-    #     else:
-    #         return False
-    #
-    #
-    # gwind.bind("<Key>", make_move)
 
     gwind.mainloop()
