@@ -1,4 +1,3 @@
-import colorsys
 import random
 import time
 import tkinter
