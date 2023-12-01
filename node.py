@@ -42,32 +42,29 @@ class node(tkinter.Canvas):
         self.posx, self.posy = self.pos
         self.config(width=100, height=100, borderwidth=0, highlightthickness=0, bg=EMPTY_COLOR)
         self.value = value
-        self.nodetopos(self.posx, self.posy)
+        self._nodetopos(self.posx, self.posy)
         self.changed_curr_pass = False
         self.num = self.create_text(50, 50, text="", fill="black", font=("ARIEL", 15, "bold"))
         if not empty:
-            self.change_color(self.value)
+            self._change_color(self.value)
             self.itemconfig(self.num, text=value)
 
     def increment_val(self):
         if not self.value:
             self.value += 1
         self.value *= 2
-        self.change_val(self.value)
-        self.change_color(self.value)
+        self._change_val(self.value)
+        self._change_color(self.value)
         return self.value
 
-    def change_val(self, value):
-        self.change_color(self.value)
+    def _change_val(self, value):
+        self._change_color(self.value)
         self.itemconfig(self.num, text=value)
 
-    def nodetopos(self, px, py):
+    def _nodetopos(self, px, py):
         self.place(x=px * 101 + 1, y=(py * 101) + 1 + OFFSET)
 
-    def changepos(self, px, py):
-        self.place(x=px, y=py + OFFSET)
-
-    def change_color(self, value):
+    def _change_color(self, value):
         col = calc_color(value)
         self.config(bg=col)
 
