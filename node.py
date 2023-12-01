@@ -12,6 +12,7 @@ OFFSET = 30
 # TODO : Store High Score
 
 
+
 def calc_color(value):
     hex_color = "#00ff9c"
     factor = 0
@@ -75,8 +76,8 @@ class node(tkinter.Canvas):
         col = calc_color(value)
         self.config(bg=col)
 
-    def __repr__(self):
-        return f"{self.value = }, {self.pos = }"
+    # def __repr__(self):
+    #     return f"{self.value = }, {self.pos = }"
 
-    def __str__(self):
-        return f"{self.value = }, {self.pos = }"
+    # def __str__(self):
+    #     return f"{self.value = }, {self.pos = }"

@@ -3,17 +3,22 @@ import random
 import time
 import tkinter
 import tkinter.ttk
+from threading import Thread
+
 from node import node
 
 MAX_VALUE = 10
 EMPTY_COLOR = "#F7F7F7"
 INITIAL_NODES = 2
 OFFSET = 30
+ANIMATION_SPEED = 0.000001
+STEP_SIZE = 2
 
 
 # TODO : {Show game over on screen} Done
 # TODO : Add a new Reset Button
 # TODO : Store High Score
+
 
 def make_empty(enode: node):
     enode.value = 0
@@ -21,37 +26,11 @@ def make_empty(enode: node):
     enode.config(bg=EMPTY_COLOR)
 
 
-def calc_color(value):
-    hex_color = "#00ff9c"
-    factor = 0
-
-    while value > 1:
-        factor += 1
-        value /= 2
-
-    saturation_factor = factor / MAX_VALUE
-
-    rgb_color_raw = tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
-
-    # Convert RGB to HSV
-    hsv_color_r = colorsys.rgb_to_hsv(rgb_color_raw[0] / 255.0, rgb_color_raw[1] / 255.0, rgb_color_raw[2] / 255.0)
-
-    # Adjust saturation
-    new_saturation = min(1.0, max(0.0, hsv_color_r[1] * saturation_factor) * 2)
-    hsv_color = (hsv_color_r[0], new_saturation, hsv_color_r[2])
-
-    rgb_color = tuple(int(x * 255) for x in colorsys.hsv_to_rgb(*hsv_color))
-
-    # Convert RGB to hex
-    new_hex_color = "#{:02x}{:02x}{:02x}".format(rgb_color[0], min(255, rgb_color[1] + 70), min(255, rgb_color[2] + 70))
-
-    return new_hex_color
-
-
 class event_handler:
     def __init__(self, window):
         self.score = 0
         self.window = window
+        self.move_animating = False
         self.canvasmain = tkinter.Canvas(width=404, height=404)
         self.canvasmain.place(x=0, y=OFFSET)
         self.drawlines()
@@ -62,14 +41,28 @@ class event_handler:
 
         for i in range(INITIAL_NODES):
             self.choose_rand_available()
-    
+
+        window.bind("<Key>", self.move_handler)
+
+    def move_handler(self, event):
+        if not self.move_animating:
+            binds = {"a": "left", "d": "right", "w": "up", "s": "down"}
+            key = event.keysym.lower()
+            if key in binds.keys():
+                direction = binds[key][:1]
+                self.make_move(direction)
+            elif key in binds.values():
+                direction = key[:1]
+                self.make_move(direction)
+            else:
+                return False
+
     def drawlines(self):
         for i in range(1, 4):
             self.canvasmain.create_line(101 * i, 0, 101 * i, 404)  # VERT
             self.canvasmain.create_line(0, (101 * i), 404, (101 * i))  # HOR
         self.canvasmain.create_line(0, 1, 404, 1)
-        
-    
+
     def choose_rand_available(self):
         visited = []
         while True:
@@ -188,7 +181,7 @@ class event_handler:
                 # merge
                 if shifted.value == current.value:
                     finalpos = self.nodes[j][i + k]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -197,7 +190,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j][i + k - 1]
-                        self.moveanimate(current, finalpos)
+                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -205,7 +198,7 @@ class event_handler:
                 # shift
                 else:
                     finalpos = self.nodes[j][i + k - 1]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -232,7 +225,7 @@ class event_handler:
 
                 if shifted.value == current.value:
                     finalpos = self.nodes[j][i - k]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -241,7 +234,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j][i - k + 1]
-                        self.moveanimate(current, finalpos)
+                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -249,7 +242,7 @@ class event_handler:
 
                 else:
                     finalpos = self.nodes[j][i - k + 1]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -276,7 +269,7 @@ class event_handler:
 
                 if shifted.value == current.value:
                     finalpos = self.nodes[j + k][i]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -285,7 +278,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j + k - 1][i]
-                        self.moveanimate(current, finalpos)
+                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -293,7 +286,7 @@ class event_handler:
 
                 else:
                     finalpos = self.nodes[j + k - 1][i]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -320,7 +313,7 @@ class event_handler:
 
                 if shifted.value == current.value:
                     finalpos = self.nodes[j - k][i]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if not finalpos.changed_curr_pass:
                         finalpos.changed_curr_pass = True
                         current.changed_curr_pass = False
@@ -329,7 +322,7 @@ class event_handler:
                         make_empty(current)
                     else:
                         finalpos = self.nodes[j - k + 1][i]
-                        self.moveanimate(current, finalpos)
+                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
                         if current.pos != finalpos.pos:
                             while current.value > finalpos.value:
                                 finalpos.increment_val()
@@ -337,7 +330,7 @@ class event_handler:
 
                 else:
                     finalpos = self.nodes[j - k + 1][i]
-                    self.moveanimate(current, finalpos)
+                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
                     if current.pos != finalpos.pos:
                         while current.value > finalpos.value:
                             finalpos.increment_val()
@@ -349,34 +342,32 @@ class event_handler:
         return u or d or l or r
 
     def moveanimate(self, startpos: node, endpos: node, merge=0):
-        startx, starty = startpos.pos
-        startx *= 101
-        starty *= 101
-        endx, endy = endpos.pos
-        endy *= 101
-        endx *= 101
+        startx, starty = (i * 101 for i in startpos.pos)
+        endx, endy = (i * 101 for i in endpos.pos)
         ix, iy = startx, starty
-
-        print(starty, startx, endx, endy)
+        tkinter.Misc.lift(startpos)
 
         if startx != endx:
-            # shift hor
+            # shift hor + (100 if startx < endx else -100)
             while ix != endx:
-                time.sleep(0.000001)
+                time.sleep(ANIMATION_SPEED)
                 # if startx < endx then add or else subtract
-                ix = ix + (1 if startx <= endx else -1)
-                startpos.place(x=ix, y=endy + OFFSET)
+                ix = ix + (STEP_SIZE if startx <= endx else -STEP_SIZE)
+                if (startx < endx < ix) or (startx > endx > ix):
+                    startpos.place(x=endx, y=endy + OFFSET)
+                    break
+                startpos.place(x=ix + 1, y=endy + OFFSET + 1)
                 self.window.update()
         else:
-            # shift vert
+            # shift vert + (100 if starty < endy else -100)
             while iy != endy:
-                time.sleep(0.000001)
+                time.sleep(ANIMATION_SPEED)
                 # if startx < endx then add or else subtract
-                iy = iy + (1 if starty <= endy else -1)
-                startpos.place(x=startx, y=iy + OFFSET)
+                iy = iy + (STEP_SIZE if starty <= endy else -STEP_SIZE)
+                if (starty < endy < iy) or (starty > endy > iy):
+                    startpos.place(x=endx, y=endy + OFFSET)
+                    break
+                startpos.place(x=startx + 1, y=iy + OFFSET + 1)
                 self.window.update()
 
-        print(startx, startx + (startx % 100), starty)
-
         startpos.place(x=startx + 1, y=starty + OFFSET + 1)
-        self.drawlines()
