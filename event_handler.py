@@ -17,6 +17,7 @@ STEP_SIZE = 2
 # TODO : {Show game over on screen} Done
 # TODO : Add a new Reset Button
 # TODO : Store High Score
+# TODO : Use the self.moveanimating boolean to check if move is available or not to do
 
 
 def make_empty(enode: node):
