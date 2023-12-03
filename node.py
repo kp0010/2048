@@ -1,11 +1,6 @@
 import tkinter
 import colorsys
-
-MAX_VALUE = 20
-EMPTY_COLOR = "#FCFCFC"
-INITIAL_NODES = 2
-OFFSET = 30
-NODE_COLOR = "#00ff9c"
+from config import *
 
 
 def calc_color(value):
@@ -36,7 +31,7 @@ def calc_color(value):
 
 
 class node(tkinter.Canvas):
-    def __init__(self, x=0, y=0, value=0, empty=0):
+    def __init__(self, x=0, y=0, value=0):
         super().__init__()
         self.pos = (x, y)
         self.posx, self.posy = self.pos
@@ -45,7 +40,7 @@ class node(tkinter.Canvas):
         self._nodetopos(self.posx, self.posy)
         self.changed_curr_pass = False
         self.num = self.create_text(50, 50, text="", fill="black", font=("ARIEL", 15, "bold"))
-        if not empty:
+        if value != 0:
             self._change_color(self.value)
             self.itemconfig(self.num, text=value)
 
@@ -54,8 +49,11 @@ class node(tkinter.Canvas):
             self.value += 1
         self.value *= 2
         self._change_val(self.value)
-        self._change_color(self.value)
         return self.value
+
+    def set_to_zero_val(self):
+        self.value = 0
+        self._change_val(self.value)
 
     def _change_val(self, value):
         self._change_color(self.value)
@@ -68,8 +66,8 @@ class node(tkinter.Canvas):
         col = calc_color(value)
         self.config(bg=col)
 
-    # def __repr__(self):
-    #     return f"{self.value = }, {self.pos = }"
+    def __repr__(self):
+        return f"{self.value = }, {self.pos = }"
 
-    # def __str__(self):
-    #     return f"{self.value = }, {self.pos = }"
+    def __str__(self):
+        return f"{self.value = }, {self.pos = }"
