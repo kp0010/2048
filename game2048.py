@@ -6,8 +6,8 @@ from threading import Thread
 
 from node import node, EMPTY_COLOR, INITIAL_NODES, OFFSET
 
-ANIMATION_SPEED = 0.001
-STEP_SIZE = 5
+ANIMATION_SPEED = 0.00001
+STEP_SIZE = 3
 
 
 # TODO : Add a new Reset Button
@@ -22,10 +22,11 @@ def make_empty(enode: node):
 
 class event_handler:
     def __init__(self, window):
+        self.animatedThreads = []
         self.score = 0
         self.window = window
         self.move_animating = False
-        self.canvasmain = tkinter.Canvas(width=404, height=404)
+        self.canvasmain = tkinter.Canvas(width=404, height=404, bg=EMPTY_COLOR)
         self.canvasmain.place(x=0, y=OFFSET)
         self.drawlines()
         self.nodes = [[node(x=i, y=j, empty=True) for i in range(4)] for j in range(4)]
@@ -137,207 +138,141 @@ class event_handler:
 
         self.move_animating = True
 
-        if direction == "r":
-            self.move_right()
-        elif direction == "l":
-            self.move_left()
-        elif direction == "d":
-            self.move_down()
-        elif direction == "u":
-            self.move_up()
+        if direction in ("l", "r"):
+            self.move_horizontal(direction)
+        elif direction in ("d", "u"):
+            self.move_vertical(direction)
 
-        self.move_animating = False
 
-        self.choose_rand_available()
+        def turnonanimate():
+            self.move_animating = False
+            self.choose_rand_available()
+
+        turnonanimate()
+
+        self.animatedThreads = []
+
 
     def __clear_flags(self):
         for row in self.nodes:
             for el in row:
                 el.changed_curr_pass = False
 
-    def move_right(self):
+
+    def move_vertical(self, direction):
         self.__clear_flags()
 
-        for i in range(2, -1, -1):
-            for j in range(0, 4):
+        ranges = {"d": [(2, -1, -1), (0, 4), 1], "u": [(1, 4), (0, 4), -1]}
+
+        range1 = ranges[direction][0]
+        range2 = ranges[direction][1]
+        sign = ranges[direction][2]
+
+        for j in range(*range1):
+            for i in range(*range2):
                 k = 1
                 current = self.nodes[j][i]
 
                 if current.value == 0:
                     continue
 
-                shifted = self.nodes[j][i + k]
+                shifted = self.nodes[j + (k * sign)][i]
                 while not shifted.value:
                     k += 1
-                    if (i + k) < 4:
-                        shifted = self.nodes[j][i + k]
+                    if 0 <= (j + (k * sign)) <= 3:
+                        shifted = self.nodes[j + (k * sign)][i]
                     else:
                         break
 
-                # merge
                 if shifted.value == current.value:
-                    finalpos = self.nodes[j][i + k]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
+                    finalpos = self.nodes[j + (k * sign)][i]
                     if not finalpos.changed_curr_pass:
-                        finalpos.changed_curr_pass = True
-                        current.changed_curr_pass = False
-                        self.score += finalpos.increment_val()
-                        self.scoretext.config(text=f"Score : {self.score}")
-                        make_empty(current)
+                        self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
                     else:
-                        finalpos = self.nodes[j][i + k - 1]
-                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                        if current.pos != finalpos.pos:
-                            while current.value > finalpos.value:
-                                finalpos.increment_val()
-                            make_empty(current)
-                # shift
-                else:
-                    finalpos = self.nodes[j][i + k - 1]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                    if current.pos != finalpos.pos:
-                        while current.value > finalpos.value:
-                            finalpos.increment_val()
-                        make_empty(current)
+                        finalpos = self.nodes[j + (k * sign) - (1 * sign)][i]
+                        self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
 
-    def move_left(self):
+                else:
+                    finalpos = self.nodes[j + (k * sign) - (1 * sign)][i]
+                    self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+
+            try:
+                for thread in self.animatedThreads:
+                    thread.run()
+
+                self.animatedThreads = []
+            except AttributeError:
+                pass
+
+
+    def move_horizontal(self, direction):
         self.__clear_flags()
 
-        for i in range(1, 4):
-            for j in range(0, 4):
+        ranges = {"r": [(2, -1, -1), (0, 4), 1], "l": [(1, 4), (0, 4), -1]}
+
+        range1 = ranges[direction][0]
+        range2 = ranges[direction][1]
+        sign = ranges[direction][2]
+
+        for i in range(*range1):
+            for j in range(*range2):
                 k = 1
                 current = self.nodes[j][i]
 
                 if current.value == 0:
                     continue
 
-                shifted = self.nodes[j][i - k]
+                shifted = self.nodes[j][i + (k * sign)]
                 while not shifted.value:
                     k += 1
-                    if (i - k) >= 0:
-                        shifted = self.nodes[j][i - k]
+                    if 0 <= (i + (k * sign)) <= 3:
+                        shifted = self.nodes[j][i + (k * sign)]
                     else:
                         break
 
                 if shifted.value == current.value:
-                    finalpos = self.nodes[j][i - k]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
+                    finalpos = self.nodes[j][i + (k * sign)]
                     if not finalpos.changed_curr_pass:
-                        finalpos.changed_curr_pass = True
-                        current.changed_curr_pass = False
-                        self.score += finalpos.increment_val()
-                        self.scoretext.config(text=f"Score : {self.score}")
-                        make_empty(current)
+                        self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
                     else:
-                        finalpos = self.nodes[j][i - k + 1]
-                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                        if current.pos != finalpos.pos:
-                            while current.value > finalpos.value:
-                                finalpos.increment_val()
-                            make_empty(current)
+                        finalpos = self.nodes[j][i + (k * sign) - (1 * sign)]
+                        self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
 
                 else:
-                    finalpos = self.nodes[j][i - k + 1]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                    if current.pos != finalpos.pos:
-                        while current.value > finalpos.value:
-                            finalpos.increment_val()
-                        make_empty(current)
+                    finalpos = self.nodes[j][i + (k * sign) - (1 * sign)]
+                    self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
 
-    def move_down(self):
-        self.__clear_flags()
+            try:
+                for thread in self.animatedThreads:
+                    thread.run()
 
-        for j in range(2, -1, -1):
-            for i in range(0, 4):
-                k = 1
-                current = self.nodes[j][i]
+                self.animatedThreads = []
+            except AttributeError:
+                pass
 
-                if current.value == 0:
-                    continue
 
-                shifted = self.nodes[j + k][i]
-                while not shifted.value:
-                    k += 1
-                    if (j + k) <= 3:
-                        shifted = self.nodes[j + k][i]
-                    else:
-                        break
+    def move_actual(self, current: node, finalpos: node, mode: str):
 
-                if shifted.value == current.value:
-                    finalpos = self.nodes[j + k][i]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                    if not finalpos.changed_curr_pass:
-                        finalpos.changed_curr_pass = True
-                        current.changed_curr_pass = False
-                        self.score += finalpos.increment_val()
-                        self.scoretext.config(text=f"Score : {self.score}")
-                        make_empty(current)
-                    else:
-                        finalpos = self.nodes[j + k - 1][i]
-                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                        if current.pos != finalpos.pos:
-                            while current.value > finalpos.value:
-                                finalpos.increment_val()
-                            make_empty(current)
+        match mode:
+            case "1":
+                finalpos.changed_curr_pass = True
+                current.changed_curr_pass = False
+                self.score += finalpos.increment_val()
+                self.scoretext.config(text=f"Score : {self.score}")
+                make_empty(current)
+            case "2":
+                if current.pos != finalpos.pos:
+                    while current.value > finalpos.value:
+                        finalpos.increment_val()
+                    make_empty(current)
 
-                else:
-                    finalpos = self.nodes[j + k - 1][i]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                    if current.pos != finalpos.pos:
-                        while current.value > finalpos.value:
-                            finalpos.increment_val()
-                        make_empty(current)
-
-    def move_up(self):
-        self.__clear_flags()
-
-        for j in range(1, 4):
-            for i in range(0, 4):
-                k = 1
-                current = self.nodes[j][i]
-
-                if current.value == 0:
-                    continue
-
-                shifted = self.nodes[j - k][i]
-                while not shifted.value:
-                    k += 1
-                    if (j - k) >= 0:
-                        shifted = self.nodes[j - k][i]
-                    else:
-                        break
-
-                if shifted.value == current.value:
-                    finalpos = self.nodes[j - k][i]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                    if not finalpos.changed_curr_pass:
-                        finalpos.changed_curr_pass = True
-                        current.changed_curr_pass = False
-                        self.score += finalpos.increment_val()
-                        self.scoretext.config(text=f"Score : {self.score}")
-                        make_empty(current)
-                    else:
-                        finalpos = self.nodes[j - k + 1][i]
-                        Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                        if current.pos != finalpos.pos:
-                            while current.value > finalpos.value:
-                                finalpos.increment_val()
-                            make_empty(current)
-
-                else:
-                    finalpos = self.nodes[j - k + 1][i]
-                    Thread(target=self.moveanimate, args=(current, finalpos)).run()
-                    if current.pos != finalpos.pos:
-                        while current.value > finalpos.value:
-                            finalpos.increment_val()
-                        make_empty(current)
 
     def check_all_moves(self):
         u, d = self.check_valid_move("u"), self.check_valid_move("d")
         l, r = self.check_valid_move("l"), self.check_valid_move("r")
         return u or d or l or r
 
-    def moveanimate(self, startpos: node, endpos: node):
+    def move_animated(self, startpos: node, endpos: node, mode: str):
         startx, starty = (i * 101 for i in startpos.pos)
         endx, endy = (i * 101 for i in endpos.pos)
         ix, iy = startx, starty
@@ -366,4 +301,6 @@ class event_handler:
                 startpos.place(x=startx + 1, y=iy + OFFSET + 1)
                 self.window.update()
 
+        # Thread(target=self.move_actual, args=(startpos, endpos, mode)).run()
+        self.move_actual(startpos, endpos, mode)
         startpos.place(x=startx + 1, y=starty + OFFSET + 1)

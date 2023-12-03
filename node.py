@@ -2,7 +2,7 @@ import tkinter
 import colorsys
 
 MAX_VALUE = 20
-EMPTY_COLOR = "#F7F7F7"
+EMPTY_COLOR = "#FCFCFC"
 INITIAL_NODES = 2
 OFFSET = 30
 NODE_COLOR = "#00ff9c"

@@ -1,5 +1,5 @@
 from tkinter import Tk
-from game2048 import event_handler, OFFSET
+from game2048 import event_handler, OFFSET, EMPTY_COLOR
 
 
 if __name__ == '__main__':
