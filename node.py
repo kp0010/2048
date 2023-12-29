@@ -30,19 +30,22 @@ def calc_color(value):
     return new_hex_color
 
 
-class node(tkinter.Canvas):
-    def __init__(self, x=0, y=0, value=0):
+class node:
+    def __init__(self, x=0, y=0, value=0, draw=True):
         super().__init__()
         self.pos = (x, y)
         self.posx, self.posy = self.pos
-        self.config(width=100, height=100, borderwidth=0, highlightthickness=0, bg=EMPTY_COLOR)
         self.value = value
-        self._nodetopos(self.posx, self.posy)
         self.changed_curr_pass = False
-        self.num = self.create_text(50, 50, text="", fill="black", font=("ARIEL", 15, "bold"))
-        if value != 0:
-            self._change_color(self.value)
-            self.itemconfig(self.num, text=value)
+        if draw:
+            self.canvas = tkinter.Canvas()
+            self.canvas.config(width=100, height=100, borderwidth=0, highlightthickness=0, bg=EMPTY_COLOR)
+            self._nodetopos(self.posx, self.posy)
+            self.num = self.canvas.create_text(50, 50, text="", fill="black", font=("ARIEL", 15, "bold"))
+            if value != 0:
+                self._change_color(self.value)
+                self.canvas.itemconfig(self.num, text=value)
+
 
     def increment_val(self):
         if not self.value:
@@ -57,14 +60,14 @@ class node(tkinter.Canvas):
 
     def _change_val(self, value):
         self._change_color(self.value)
-        self.itemconfig(self.num, text=value)
+        self.canvas.itemconfig(self.num, text=value)
 
     def _nodetopos(self, px, py):
-        self.place(x=px * 101 + 1, y=(py * 101) + 1 + OFFSET)
+        self.canvas.place(x=px * 101 + 1, y=(py * 101) + 1 + OFFSET)
 
     def _change_color(self, value):
         col = calc_color(value)
-        self.config(bg=col)
+        self.canvas.config(bg=col)
 
     def __repr__(self):
         return f"{self.value = }, {self.pos = }"
