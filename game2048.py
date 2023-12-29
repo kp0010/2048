@@ -1,10 +1,11 @@
 import random
 import time
-import tkinter
+import tkinter as tk
 import tkinter.ttk
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing.pool import ThreadPool
 from threading import Thread
 from config import *
-import copy
 
 from node import node, EMPTY_COLOR, INITIAL_NODES, OFFSET
 
@@ -90,12 +91,12 @@ class event_handler:
         self.score = 0
         self.window = window
         self.move_animating = False
-        self.canvasmain = tkinter.Canvas(width=404, height=404, bg=EMPTY_COLOR)
+        self.canvasmain = tk.Canvas(width=404, height=404, bg=EMPTY_COLOR)
         self.canvasmain.place(x=0, y=OFFSET)
         self.__drawborder()
         self.nodes = [[node(x=i, y=j) for i in range(4)] for j in range(4)]
 
-        self.scoretext = tkinter.Label(text=f"Score : {self.score}", font=("ariel", 10, "bold"))
+        self.scoretext = tk.Label(text=f"Score : {self.score}", font=("ariel", 10, "bold"))
         self.scoretext.place(x=10, y=5)
 
         self.nodescopy = None
@@ -164,22 +165,19 @@ class event_handler:
         elif direction in ("d", "u"):
             self.move_vertical(direction, self.nodescopy)
 
-        # print(self.moves)
-        # do the moves
+
         for move in self.moves:
             ini_pos = move["initial"]
             fin_pos = move["final"]
             if ini_pos == fin_pos:
-                print(ini_pos, fin_pos)
                 continue
             initial = self.nodes[ini_pos[0]][ini_pos[1]]
             final = self.nodes[fin_pos[0]][fin_pos[1]]
-            if initial.value == final.value:
-                final.increment_val()
-            else:
-                while final.value < initial.value:
-                    final.increment_val()
-            initial.set_to_empty()
+            newThread = Thread(target=self.move_animated, args=(initial, final, move), daemon=True)
+            self.animatedThreads.append(newThread)
+
+        for each in self.animatedThreads:
+            each.start()
 
         self.moves = []
         self.nodescopy = []
@@ -282,31 +280,33 @@ class event_handler:
                             1 * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
                     finalpos.value, current.value = current.value, finalpos.value
 
-    def move_actual(self, current: node, finalpos: node, mode: str):
+    def move_actual(self, move):
+        # for move in self.moves:
+        ini_pos = move["initial"]
+        fin_pos = move["final"]
+        if ini_pos == fin_pos:
+            return
+        initial = self.nodes[ini_pos[0]][ini_pos[1]]
+        final = self.nodes[fin_pos[0]][fin_pos[1]]
 
-        match mode:
-            case "1":
-                finalpos.changed_curr_pass = True
-                current.changed_curr_pass = False
-                self.score += finalpos.increment_val()
-                self.scoretext.config(text=f"Score : {self.score}")
-                make_empty(current)
-            case "2":
-                if current.pos != finalpos.pos:
-                    while current.value > finalpos.value:
-                        finalpos.increment_val()
-                    make_empty(current)
+        # self.move_animated(initial, final)
+        if initial.value == final.value:
+            final.increment_val()
+        else:
+            while final.value < initial.value:
+                final.increment_val()
+        initial.set_to_empty()
 
     def check_all_moves(self):
         u, d = valid_move_checker("u", self.nodes), valid_move_checker("d", self.nodes)
         l, r = valid_move_checker("l", self.nodes), valid_move_checker("r", self.nodes)
         return u or d or l or r
 
-    def move_animated(self, startpos: node, endpos: node, mode: str):
+    def move_animated(self, startpos: node, endpos: node, move):
         startx, starty = (i * 101 for i in startpos.pos)
         endx, endy = (i * 101 for i in endpos.pos)
         ix, iy = startx, starty
-        tkinter.Misc.lift(startpos)
+        tk.Misc.lift(startpos.canvas)
 
         if startx != endx:
             # shift hor + (100 if startx < endx else -100)
@@ -331,6 +331,5 @@ class event_handler:
                 startpos.canvas.place(x=startx + 1, y=iy + OFFSET + 1)
                 self.window.update()
 
-        Thread(target=self.move_actual, args=(startpos, endpos, mode)).run()
-        # self.move_actual(startpos, endpos, mode)
+        self.move_actual(move)
         startpos.canvas.place(x=startx + 1, y=starty + OFFSET + 1)
