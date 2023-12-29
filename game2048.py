@@ -152,7 +152,12 @@ class event_handler:
         self.move_animating = True
 
         self.__clear_flags()
-        self.nodescopy = copy.deepcopy(self.nodes)
+        self.nodescopy = []
+        for row in self.nodes:
+            newrow = []
+            for enode in row:
+                newrow.append(node(x=enode.posx, y=enode.posy, value=enode.value, draw=False))
+            self.nodescopy.append(newrow)
 
         if direction in ("l", "r"):
             self.move_horizontal(direction, self.nodescopy)
