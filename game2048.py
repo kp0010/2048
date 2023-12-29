@@ -156,8 +156,7 @@ class event_handler:
         for row in self.nodes:
             newrow = []
             for enode in row:
-                newrow.append(
-                    node(x=enode.posx, y=enode.posy, value=enode.value, draw=False, changed=enode.changed_curr_pass))
+                newrow.append(node(x=enode.posx, y=enode.posy, value=enode.value, draw=False))
             self.nodescopy.append(newrow)
 
         if direction in ("l", "r"):
@@ -171,10 +170,10 @@ class event_handler:
             ini_pos = move["initial"]
             fin_pos = move["final"]
             if ini_pos == fin_pos:
+                print(ini_pos, fin_pos)
                 continue
             initial = self.nodes[ini_pos[0]][ini_pos[1]]
             final = self.nodes[fin_pos[0]][fin_pos[1]]
-            print(initial, final)
             if initial.value == final.value:
                 final.increment_val()
             else:
@@ -190,8 +189,8 @@ class event_handler:
 
     def __clear_flags(self):
         for row in self.nodes:
-            for el in row:
-                el.changed_curr_pass = False
+            for enode in row:
+                enode.changed_curr_pass = False
 
     def move_vertical(self, direction, nodescopy):
 
@@ -219,23 +218,24 @@ class event_handler:
 
                 if shifted.value == current.value:
                     finalpos = nodescopy[j + (k * sign)][i]
-                    current = nodescopy[j][i]
                     if not finalpos.changed_curr_pass:
 
                         finalpos = nodescopy[j + (k * sign)][i]
+                        finalpos.changed_curr_pass = True
                         self.moves.append({"initial": (j, i), "final": (j + (k * sign),
                                                                         i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
+                        finalpos.value, current.value = finalpos.value * 2, 0
                     else:
                         finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
                         self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign),
                                                                         i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                        finalpos.value, current.value = current.value, finalpos.value
 
                 else:
                     finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
                     self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign),
                                                                     i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
-
-                finalpos.value, current.value = current.value, finalpos.value
+                    finalpos.value, current.value = current.value, finalpos.value
 
     def move_horizontal(self, direction, nodescopy):
 
@@ -267,18 +267,20 @@ class event_handler:
                     if not finalpos.changed_curr_pass:
 
                         finalpos = nodescopy[j][i + (k * sign)]
+                        finalpos.changed_curr_pass = True
                         self.moves.append({"initial": (j, i), "final": (j, i + (
                                 k * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
+                        finalpos.value, current.value = finalpos.value * 2, 0
                     else:
                         finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
                         self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (
                                 1 * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                        finalpos.value, current.value = current.value, finalpos.value
                 else:
                     finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
                     self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (
                             1 * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
-
-                finalpos.value, current.value = current.value, finalpos.value
+                    finalpos.value, current.value = current.value, finalpos.value
 
     def move_actual(self, current: node, finalpos: node, mode: str):
 
