@@ -31,12 +31,12 @@ def calc_color(value):
 
 
 class node:
-    def __init__(self, x=0, y=0, value=0, draw=True):
+    def __init__(self, x=0, y=0, value=0, draw=True, changed=False):
         super().__init__()
         self.pos = (x, y)
         self.posx, self.posy = self.pos
         self.value = value
-        self.changed_curr_pass = False
+        self.changed_curr_pass = changed
         if draw:
             self.canvas = tkinter.Canvas()
             self.canvas.config(width=100, height=100, borderwidth=0, highlightthickness=0, bg=EMPTY_COLOR)
@@ -54,9 +54,10 @@ class node:
         self._change_val(self.value)
         return self.value
 
-    def set_to_zero_val(self):
+    def set_to_empty(self):
         self.value = 0
-        self._change_val(self.value)
+        self._change_val("")
+        self.canvas["bg"] = EMPTY_COLOR
 
     def _change_val(self, value):
         self._change_color(self.value)

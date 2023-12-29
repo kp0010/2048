@@ -156,7 +156,8 @@ class event_handler:
         for row in self.nodes:
             newrow = []
             for enode in row:
-                newrow.append(node(x=enode.posx, y=enode.posy, value=enode.value, draw=False))
+                newrow.append(
+                    node(x=enode.posx, y=enode.posy, value=enode.value, draw=False, changed=enode.changed_curr_pass))
             self.nodescopy.append(newrow)
 
         if direction in ("l", "r"):
@@ -164,20 +165,22 @@ class event_handler:
         elif direction in ("d", "u"):
             self.move_vertical(direction, self.nodescopy)
 
-        print(self.nodescopy)
-
         # print(self.moves)
-        #do the moves
+        # do the moves
         for move in self.moves:
             ini_pos = move["initial"]
             fin_pos = move["final"]
-            print(ini_pos, fin_pos)
-            # initial = self.nodes[ini_pos[0]][ini_pos[1]]
+            if ini_pos == fin_pos:
+                continue
             initial = self.nodes[ini_pos[0]][ini_pos[1]]
             final = self.nodes[fin_pos[0]][fin_pos[1]]
             print(initial, final)
-
-
+            if initial.value == final.value:
+                final.increment_val()
+            else:
+                while final.value < initial.value:
+                    final.increment_val()
+            initial.set_to_empty()
 
         self.moves = []
         self.nodescopy = []
@@ -220,20 +223,19 @@ class event_handler:
                     if not finalpos.changed_curr_pass:
 
                         finalpos = nodescopy[j + (k * sign)][i]
-                        self.moves.append({"initial": (j, i), "final": (j + (k * sign), i)})
-                        # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
+                        self.moves.append({"initial": (j, i), "final": (j + (k * sign),
+                                                                        i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
                     else:
                         finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
-                        self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
-                        # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                        self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign),
+                                                                        i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
 
                 else:
                     finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
-                    self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
-                    # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                    self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign),
+                                                                    i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
 
                 finalpos.value, current.value = current.value, finalpos.value
-
 
     def move_horizontal(self, direction, nodescopy):
 
@@ -243,7 +245,6 @@ class event_handler:
         range1 = ranges[direction][0]
         range2 = ranges[direction][1]
         sign = ranges[direction][2]
-
 
         for i in range(*range1):
             for j in range(*range2):
@@ -266,19 +267,18 @@ class event_handler:
                     if not finalpos.changed_curr_pass:
 
                         finalpos = nodescopy[j][i + (k * sign)]
-                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign))})
-                        # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
+                        self.moves.append({"initial": (j, i), "final": (j, i + (
+                                k * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
                     else:
                         finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
-                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
-                        # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (
+                                1 * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
                 else:
                     finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
-                    self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
-                    # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                    self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (
+                            1 * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
 
                 finalpos.value, current.value = current.value, finalpos.value
-
 
     def move_actual(self, current: node, finalpos: node, mode: str):
 
@@ -296,8 +296,8 @@ class event_handler:
                     make_empty(current)
 
     def check_all_moves(self):
-        u, d = valid_move_checker("u"), valid_move_checker("d")
-        l, r = valid_move_checker("l"), valid_move_checker("r")
+        u, d = valid_move_checker("u", self.nodes), valid_move_checker("d", self.nodes)
+        l, r = valid_move_checker("l", self.nodes), valid_move_checker("r", self.nodes)
         return u or d or l or r
 
     def move_animated(self, startpos: node, endpos: node, mode: str):
@@ -313,9 +313,9 @@ class event_handler:
                 # if startx < endx then add or else subtract
                 ix = ix + (STEP_SIZE if startx <= endx else -STEP_SIZE)
                 if (startx < endx < ix) or (startx > endx > ix):
-                    startpos.place(x=endx, y=endy + OFFSET)
+                    startpos.canvas.place(x=endx, y=endy + OFFSET)
                     break
-                startpos.place(x=ix + 1, y=endy + OFFSET + 1)
+                startpos.canvas.place(x=ix + 1, y=endy + OFFSET + 1)
                 self.window.update()
         else:
             # shift vert + (100 if starty < endy else -100)
@@ -324,11 +324,11 @@ class event_handler:
                 # if startx < endx then add or else subtract
                 iy = iy + (STEP_SIZE if starty <= endy else -STEP_SIZE)
                 if (starty < endy < iy) or (starty > endy > iy):
-                    startpos.place(x=endx, y=endy + OFFSET)
+                    startpos.canvas.place(x=endx, y=endy + OFFSET)
                     break
-                startpos.place(x=startx + 1, y=iy + OFFSET + 1)
+                startpos.canvas.place(x=startx + 1, y=iy + OFFSET + 1)
                 self.window.update()
 
         Thread(target=self.move_actual, args=(startpos, endpos, mode)).run()
         # self.move_actual(startpos, endpos, mode)
-        startpos.place(x=startx + 1, y=starty + OFFSET + 1)
+        startpos.canvas.place(x=startx + 1, y=starty + OFFSET + 1)
