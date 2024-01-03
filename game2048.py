@@ -16,8 +16,8 @@ from node import node, EMPTY_COLOR, INITIAL_NODES, OFFSET
 
 def make_empty(enode: node):
     enode.value = 0
-    enode.itemconfig(enode.num, text="")
-    enode.config(bg=EMPTY_COLOR)
+    enode.canvas.itemconfig(enode.num, text="")
+    enode.canvas.config(bg=EMPTY_COLOR)
 
 
 def switch(lst: list[list[node]], pos1: tuple, pos2: tuple):
@@ -165,25 +165,70 @@ class event_handler:
         elif direction in ("d", "u"):
             self.move_vertical(direction, self.nodescopy)
 
+        # moves are in format - [{'initial': (2, 3), 'final': (3, 3)},...]
+
+        # Previous Implementation with Threads
+        # for move in self.moves:
+        #     ini_pos = move["initial"]
+        #     fin_pos = move["final"]
+        #     if ini_pos == fin_pos:
+        #         continue
+        #     initial = self.nodes[ini_pos[0]][ini_pos[1]]
+        #     final = self.nodes[fin_pos[0]][fin_pos[1]]
+
+        # newThread = Thread(target=self.move_animated, args=(initial, final, move), daemon=True)
+        # self.animatedThreads.append(newThread)
+
+        # ----------------------------------------------------------------------------------------------
+
+        # New Implementation
+        dist: int = 0
+        moved_on_pass = True
+
+        while dist <= 304 and moved_on_pass:
+            for move in self.moves:
+                ini_pos = move["initial"]
+                fin_pos = move["final"]
+                diff = [(b - a) * 101 for a, b in zip(ini_pos, fin_pos)]
+                if sum(diff) == 0:
+                    continue
+                if abs(sum(diff)) + 1 > dist:
+                    initial = self.nodes[ini_pos[0]][ini_pos[1]]
+                    tk.Misc.lift(initial.canvas)
+                    sign = -1 if sum(diff) > 0 else 1
+
+                    dx = dist if diff[1] else 0
+                    dy = dist if diff[0] else 0
+                    nx = ini_pos[1] * 101 - (dx * sign) + 1
+                    ny = ini_pos[0] * 101 - (dy * sign) + OFFSET + 1
+
+                    if not ((304 >= nx >= 1) and (304 + OFFSET >= ny >= OFFSET)):
+                        break
+
+                    tk.Misc.lift(initial.canvas)
+                    initial.canvas.place(x=nx, y=ny)
+                    self.window.update()
+                    # initial.canvas.place(x=nx, y=ny)
+                    moved_on_pass = True
+                else:
+                    moved_on_pass = False
+            else:
+                dist += 1
+                continue
+            break
 
         for move in self.moves:
-            ini_pos = move["initial"]
-            fin_pos = move["final"]
-            if ini_pos == fin_pos:
-                continue
-            initial = self.nodes[ini_pos[0]][ini_pos[1]]
-            final = self.nodes[fin_pos[0]][fin_pos[1]]
-            newThread = Thread(target=self.move_animated, args=(initial, final, move), daemon=True)
-            self.animatedThreads.append(newThread)
+            self.move_actual(move)
 
-        for each in self.animatedThreads:
-            each.start()
+        # for each in self.animatedThreads:
+        #     each.start()
 
         self.moves = []
         self.nodescopy = []
         self.move_animating = False
-        self.choose_rand_node()
         self.animatedThreads = []
+
+        if RENDER_NEW_NODE: self.choose_rand_node()
 
     def __clear_flags(self):
         for row in self.nodes:
@@ -289,13 +334,22 @@ class event_handler:
         initial = self.nodes[ini_pos[0]][ini_pos[1]]
         final = self.nodes[fin_pos[0]][fin_pos[1]]
 
-        # self.move_animated(initial, final)
+        # print(initial, final)
+
         if initial.value == final.value:
+            print(initial, final)
             final.increment_val()
         else:
             while final.value < initial.value:
                 final.increment_val()
         initial.set_to_empty()
+        tk.Misc.lift(final.canvas)
+        # tk.Misc.lift(initial.canvas)
+        self.window.update()
+
+        # print(initial, final)
+        # print(fin_pos[1] * 101 + 1, fin_pos[0] * 101 + OFFSET + 1)
+        # final.canvas.place(x=fin_pos[1] * 101 + 1, y=fin_pos[0] * 101 + OFFSET + 1)
 
     def check_all_moves(self):
         u, d = valid_move_checker("u", self.nodes), valid_move_checker("d", self.nodes)

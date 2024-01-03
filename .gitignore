@@ -76,6 +76,7 @@ docs/_build/
 target/
 
 # Jupyter Notebook
+.pyc
 .ipynb_checkpoints
 
 # IPython
