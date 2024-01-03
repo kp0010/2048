@@ -1,33 +1,8 @@
 import random
-import time
 import tkinter as tk
-import tkinter.ttk
-from concurrent.futures import ThreadPoolExecutor
-from multiprocessing.pool import ThreadPool
-from threading import Thread
 from config import *
-
-from node import node, EMPTY_COLOR, INITIAL_NODES, OFFSET
-
-
-# TODO : Add a new Reset Button
-# TODO : Store High Score
-
-
-def make_empty(enode: node):
-    enode.value = 0
-    enode.canvas.itemconfig(enode.num, text="")
-    enode.canvas.config(bg=EMPTY_COLOR)
-
-
-def switch(lst: list[list[node]], pos1: tuple, pos2: tuple):
-    x1, y1 = pos1
-    x2, y2 = pos2
-    node1 = lst[x1][y1]
-    node2 = lst[x2][y2]
-
-    if not node2.value:
-        node2.value = node1.value
+import tkinter.messagebox as tkmessagebox
+from node import node
 
 
 def valid_move_checker(direction: str, nodes):
@@ -87,7 +62,6 @@ def valid_move_checker(direction: str, nodes):
 
 class event_handler:
     def __init__(self, window):
-        self.animatedThreads = []
         self.score = 0
         self.window = window
         self.move_animating = False
@@ -103,11 +77,11 @@ class event_handler:
         self.moves = []
 
         for i in range(INITIAL_NODES):
-            self.choose_rand_node()
+            self.choose_random_node()
 
-        window.bind("<Key>", self.__move_from_event)
+        window.bind("<Key>", self.__event_to_move)
 
-    def __move_from_event(self, event):
+    def __event_to_move(self, event):
         if not self.move_animating:
             binds = {"a": "left", "d": "right", "w": "up", "s": "down"}
             key = event.keysym.lower()
@@ -126,7 +100,12 @@ class event_handler:
             self.canvasmain.create_line(0, (101 * i), 404, (101 * i))  # HOR
         self.canvasmain.create_line(0, 1, 404, 1)
 
-    def choose_rand_node(self):
+    def __clear_flags(self):
+        for row in self.nodes:
+            for enode in row:
+                enode.changed_curr_pass = False
+
+    def choose_random_node(self):
         visited = []
         while True:
             i, j = random.randint(0, 3), random.randint(0, 3)
@@ -144,8 +123,15 @@ class event_handler:
 
     def make_move(self, direction: str):
         if not valid_move_checker(direction, self.nodes):
-            if not self.check_all_moves():
+            if not self.__check_any_valid_move():
                 self.scoretext.config(text=f"GAME OVER!  FINAL SCORE : {self.score}")
+
+                result = tkmessagebox.askretrycancel(master=self.window, title="GAME OVER!",
+                                                     message=f"FINAL SCORE : {self.score}", icon=tkmessagebox.INFO)
+
+                if result:
+                    self.hard_reset()
+
                 return False
             return False
 
@@ -166,24 +152,8 @@ class event_handler:
 
         # moves are in format - [{'initial': (2, 3), 'final': (3, 3)},...]
 
-        # Previous Implementation with Threads
-        # for move in self.moves:
-        #     ini_pos = move["initial"]
-        #     fin_pos = move["final"]
-        #     if ini_pos == fin_pos:
-        #         continue
-        #     initial = self.nodes[ini_pos[0]][ini_pos[1]]
-        #     final = self.nodes[fin_pos[0]][fin_pos[1]]
-
-        # newThread = Thread(target=self.move_animated, args=(initial, final, move), daemon=True)
-        # self.animatedThreads.append(newThread)
-
-        # ----------------------------------------------------------------------------------------------
-
-        # New Implementation
         dist: int = 0
         moved_on_pass = True
-        # print(self.moves)
 
         while dist <= 304 and moved_on_pass:
             for move in self.moves:
@@ -208,33 +178,21 @@ class event_handler:
                     tk.Misc.lift(initial.canvas)
                     initial.canvas.place(x=nx, y=ny)
                     self.window.update()
-                    # initial.canvas.place(x=nx, y=ny)
                     moved_on_pass = True
                 else:
                     moved_on_pass = False
-            else:
-                dist += STEP_SIZE
-                continue
+            dist += STEP_SIZE
         for move in self.moves:
             self.move_actual(move)
 
-        # for each in self.animatedThreads:
-        #     each.start()
-
         self.moves = []
         self.nodescopy = []
+
+        if RENDER_NEW_NODE: self.choose_random_node()
+
         self.move_animating = False
-        self.animatedThreads = []
-
-        if RENDER_NEW_NODE: self.choose_rand_node()
-
-    def __clear_flags(self):
-        for row in self.nodes:
-            for enode in row:
-                enode.changed_curr_pass = False
 
     def move_vertical(self, direction, nodescopy):
-
         ranges = {"d": [(2, -1, -1), (0, 4), 1], "u": [(1, 4), (0, 4), -1]}
 
         range1 = ranges[direction][0]
@@ -263,24 +221,19 @@ class event_handler:
 
                         finalpos = nodescopy[j + (k * sign)][i]
                         finalpos.changed_curr_pass = True
-                        self.moves.append({"initial": (j, i), "final": (j + (k * sign),
-                                                                        i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
+                        self.moves.append({"initial": (j, i), "final": (j + (k * sign), i)})
                         finalpos.value, current.value = finalpos.value * 2, 0
                     else:
                         finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
-                        self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign),
-                                                                        i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                        self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
                         finalpos.value, current.value = current.value, finalpos.value
 
                 else:
                     finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
-                    self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign),
-                                                                    i)})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                    self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
                     finalpos.value, current.value = current.value, finalpos.value
 
     def move_horizontal(self, direction, nodescopy):
-
-        # 1 for r and d 0 for l and u
         ranges = {"r": [(2, -1, -1), (0, 4), 1], "l": [(1, 4), (0, 4), -1]}
 
         range1 = ranges[direction][0]
@@ -309,80 +262,55 @@ class event_handler:
 
                         finalpos = nodescopy[j][i + (k * sign)]
                         finalpos.changed_curr_pass = True
-                        self.moves.append({"initial": (j, i), "final": (j, i + (
-                                k * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "1")))
+                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign))})
                         finalpos.value, current.value = finalpos.value * 2, 0
                     else:
                         finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
-                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (
-                                1 * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
                         finalpos.value, current.value = current.value, finalpos.value
+
                 else:
                     finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
-                    self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (
-                            1 * sign))})  # self.animatedThreads.append(Thread(target=self.move_animated, args=(current, finalpos, "2")))
+                    self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
                     finalpos.value, current.value = current.value, finalpos.value
 
     def move_actual(self, move):
-        # for move in self.moves:
         ini_pos = move["initial"]
         fin_pos = move["final"]
+
         if ini_pos == fin_pos:
             return
+
         initial = self.nodes[ini_pos[0]][ini_pos[1]]
         final = self.nodes[fin_pos[0]][fin_pos[1]]
 
         initial.canvas.place(x=ini_pos[1] * 101 + 1, y=ini_pos[0] * 101 + OFFSET + 1)
 
-        # print(initial, final)
-
         if initial.value == final.value:
             final.increment_val()
+            self.score += final.value
+            self.scoretext["text"] = f"Score : {self.score}"
         else:
             while final.value < initial.value:
                 final.increment_val()
+
         initial.set_to_empty()
         tk.Misc.lift(final.canvas)
         tk.Misc.lift(initial.canvas)
         self.window.update()
 
-        # print(initial, final)
-        # print(fin_pos[1] * 101 + 1, fin_pos[0] * 101 + OFFSET + 1)
-        # final.canvas.place(x=fin_pos[1] * 101 + 1, y=fin_pos[0] * 101 + OFFSET + 1)
-
-    def check_all_moves(self):
+    def __check_any_valid_move(self):
         u, d = valid_move_checker("u", self.nodes), valid_move_checker("d", self.nodes)
         l, r = valid_move_checker("l", self.nodes), valid_move_checker("r", self.nodes)
         return u or d or l or r
 
-    def move_animated(self, startpos: node, endpos: node, move):
-        startx, starty = (i * 101 for i in startpos.pos)
-        endx, endy = (i * 101 for i in endpos.pos)
-        ix, iy = startx, starty
-        tk.Misc.lift(startpos.canvas)
+    def hard_reset(self):
+        self.score = 0
+        self.scoretext["text"] = f"Score : {self.score}"
 
-        if startx != endx:
-            # shift hor + (100 if startx < endx else -100)
-            while ix != endx:
-                time.sleep(ANIMATION_SPEED)
-                # if startx < endx then add or else subtract
-                ix = ix + (STEP_SIZE if startx <= endx else -STEP_SIZE)
-                if (startx < endx < ix) or (startx > endx > ix):
-                    startpos.canvas.place(x=endx, y=endy + OFFSET)
-                    break
-                startpos.canvas.place(x=ix + 1, y=endy + OFFSET + 1)
-                self.window.update()
-        else:
-            # shift vert + (100 if starty < endy else -100)
-            while iy != endy:
-                time.sleep(ANIMATION_SPEED)
-                # if startx < endx then add or else subtract
-                iy = iy + (STEP_SIZE if starty <= endy else -STEP_SIZE)
-                if (starty < endy < iy) or (starty > endy > iy):
-                    startpos.canvas.place(x=endx, y=endy + OFFSET)
-                    break
-                startpos.canvas.place(x=startx + 1, y=iy + OFFSET + 1)
-                self.window.update()
+        for row in self.nodes:
+            for enode in row:
+                enode.set_to_empty()
 
-        self.move_actual(move)
-        startpos.canvas.place(x=startx + 1, y=starty + OFFSET + 1)
+        for i in range(INITIAL_NODES):
+            self.choose_random_node()

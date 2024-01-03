@@ -12,17 +12,16 @@ if __name__ == '__main__':
 
     event_handler = event_handler(gwind)
 
-    # newmenu = tkinter.Menu(gwind)
-    #
-    # menu1 = tkinter.Menu(newmenu, tearoff=False)
-    # menu1.add_command(label="HELP", command= lambda : print("HELP"))
-    # menu1.add_separator()
-    #
-    # newmenu.add_cascade(label= "HELPP", menu = menu1)
-    #
-    # gwind.config(menu=newmenu)
+    mainMenu = tkinter.Menu(gwind)
 
-    # gwind.overrideredirect(True)
+    optionsMenu = tkinter.Menu(mainMenu, tearoff=False)
+    mainMenu.add_cascade(label="Options", menu=optionsMenu)
+
+    optionsMenu.add_command(label="Restart", command=event_handler.hard_reset)
+    optionsMenu.add_separator()
+    optionsMenu.add_command(label="Exit", command=gwind.destroy)
+
+    gwind.config(menu=mainMenu)
 
     gwind.tkraise()
 
