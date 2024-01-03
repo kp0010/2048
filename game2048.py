@@ -143,7 +143,6 @@ class event_handler:
                     return False
 
     def make_move(self, direction: str):
-
         if not valid_move_checker(direction, self.nodes):
             if not self.check_all_moves():
                 self.scoretext.config(text=f"GAME OVER!  FINAL SCORE : {self.score}")
@@ -184,6 +183,7 @@ class event_handler:
         # New Implementation
         dist: int = 0
         moved_on_pass = True
+        # print(self.moves)
 
         while dist <= 304 and moved_on_pass:
             for move in self.moves:
@@ -213,10 +213,8 @@ class event_handler:
                 else:
                     moved_on_pass = False
             else:
-                dist += 1
+                dist += STEP_SIZE
                 continue
-            break
-
         for move in self.moves:
             self.move_actual(move)
 
@@ -334,17 +332,18 @@ class event_handler:
         initial = self.nodes[ini_pos[0]][ini_pos[1]]
         final = self.nodes[fin_pos[0]][fin_pos[1]]
 
+        initial.canvas.place(x=ini_pos[1] * 101 + 1, y=ini_pos[0] * 101 + OFFSET + 1)
+
         # print(initial, final)
 
         if initial.value == final.value:
-            print(initial, final)
             final.increment_val()
         else:
             while final.value < initial.value:
                 final.increment_val()
         initial.set_to_empty()
         tk.Misc.lift(final.canvas)
-        # tk.Misc.lift(initial.canvas)
+        tk.Misc.lift(initial.canvas)
         self.window.update()
 
         # print(initial, final)

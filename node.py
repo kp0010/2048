@@ -48,8 +48,8 @@ class node:
 
 
     def increment_val(self):
-        if not self.value:
-            self.value += 1
+        if self.value == 0:
+            self.value = 1
         self.value *= 2
         self._change_val(self.value)
         return self.value
