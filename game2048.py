@@ -65,9 +65,10 @@ class event_handler:
         self.score = 0
         self.window = window
         self.move_animating = False
+
         self.canvasmain = tk.Canvas(width=404, height=404, bg=EMPTY_COLOR)
         self.canvasmain.place(x=0, y=OFFSET)
-        self.__drawborder()
+
         self.nodes = [[node(x=i, y=j) for i in range(4)] for j in range(4)]
 
         self.scoretext = tk.Label(text=f"Score : {self.score}", font=("ariel", 10, "bold"))
@@ -76,10 +77,29 @@ class event_handler:
         self.nodescopy = None
         self.moves = []
 
+        self.__drawborder()
+        self.__initmenu()
+
+
         for i in range(INITIAL_NODES):
             self.choose_random_node()
 
         window.bind("<Key>", self.__event_to_move)
+
+        self.window.update()
+
+
+    def __initmenu(self):
+        mainMenu = tk.Menu(self.window)
+
+        optionsMenu = tk.Menu(mainMenu, tearoff=False)
+        mainMenu.add_cascade(label="Options", menu=optionsMenu)
+
+        optionsMenu.add_command(label="Restart", command=event_handler.hard_reset)
+        optionsMenu.add_separator()
+        optionsMenu.add_command(label="Exit", command=self.window.destroy)
+
+        self.window.config(menu=mainMenu)
 
     def __event_to_move(self, event):
         if not self.move_animating:
