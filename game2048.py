@@ -65,6 +65,11 @@ class event_handler:
     def __init__(self, window):
         self.score = 0
         self.window = window
+
+        icon = tk.PhotoImage(file=LOGOPATH)
+        self.window.iconphoto(True, icon)
+
+
         self.move_animating = False
 
         self.canvasmain = tk.Canvas(width=404, height=404, bg=EMPTY_COLOR)

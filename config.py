@@ -6,3 +6,4 @@ MAX_VALUE = 8
 STEP_SIZE = 8
 OFFSET = 30
 RENDER_NEW_NODE = True
+LOGOPATH = "Assets/2048logo.png"
