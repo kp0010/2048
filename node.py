@@ -41,17 +41,20 @@ class node:
             self.canvas = tkinter.Canvas()
             self.canvas.config(width=100, height=100, borderwidth=0, highlightthickness=0, bg=EMPTY_COLOR)
             self._nodetopos(self.posx, self.posy)
-            self.num = self.canvas.create_text(50, 50, text="", fill="black", font=("ARIEL", 15, "bold"))
+            self.num = self.canvas.create_text(50, 50, text="", fill="black", font=("ARIAL", 15, "bold"))
             if value != 0:
                 self._change_color(self.value)
                 self.canvas.itemconfig(self.num, text=value)
 
 
-    def increment_val(self):
-        if self.value == 0:
-            self.value = 1
-        self.value *= 2
-        self._change_val(self.value)
+    def increment_val(self, incr=True):
+        if incr:
+            if self.value == 0:
+                self.value = 1
+            self.value *= 2
+            self._change_val(self.value)
+        else:
+            self._change_color(self.value)
         return self.value
 
     def set_to_empty(self):

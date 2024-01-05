@@ -1,4 +1,5 @@
 import random
+import time
 import tkinter as tk
 from config import *
 import tkinter.messagebox as tkmessagebox
@@ -80,14 +81,12 @@ class event_handler:
         self.__drawborder()
         self.__initmenu()
 
-
         for i in range(INITIAL_NODES):
             self.choose_random_node()
 
         window.bind("<Key>", self.__event_to_move)
 
         self.window.update()
-
 
     def __initmenu(self):
         mainMenu = tk.Menu(self.window)
@@ -307,7 +306,19 @@ class event_handler:
         initial.canvas.place(x=ini_pos[1] * 101 + 1, y=ini_pos[0] * 101 + OFFSET + 1)
 
         if initial.value == final.value:
-            final.increment_val()
+
+            final.canvas["bg"] = MERGE_COLOR
+            final.value *= 2
+            final.canvas.itemconfig(final.num, font=("ARIAL", 20, "bold"), text=final.value)
+
+            def merge_fn():
+                final.canvas.itemconfig(final.num, font=("ARIAL", 15, "bold"))
+                final.increment_val(incr=False)
+
+            self.window.after(300, merge_fn)
+
+            # final.canvas["width"], final.canvas["height"] = 100, 100
+
             self.score += final.value
             self.scoretext["text"] = f"Score : {self.score}"
         else:
@@ -315,8 +326,10 @@ class event_handler:
                 final.increment_val()
 
         initial.set_to_empty()
+
         tk.Misc.lift(final.canvas)
         tk.Misc.lift(initial.canvas)
+
         self.window.update()
 
     def __check_any_valid_move(self):
