@@ -95,7 +95,7 @@ class event_handler:
         optionsMenu = tk.Menu(mainMenu, tearoff=False)
         mainMenu.add_cascade(label="Options", menu=optionsMenu)
 
-        optionsMenu.add_command(label="Restart", command=event_handler.hard_reset)
+        optionsMenu.add_command(label="Restart", command=self.hard_reset)
         optionsMenu.add_separator()
         optionsMenu.add_command(label="Exit", command=self.window.destroy)
 
