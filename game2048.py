@@ -64,20 +64,23 @@ def valid_move_checker(direction: str, nodes):
 class event_handler:
     def __init__(self, window):
         self.score = 0
-        self.window = window
-
-        icon = tk.PhotoImage(file=LOGOPATH)
-        self.window.iconphoto(True, icon)
-
-
         self.move_animating = False
 
-        self.canvasmain = tk.Canvas(width=404, height=404, bg=EMPTY_COLOR)
-        self.canvasmain.place(x=0, y=OFFSET)
+        icon = tk.PhotoImage(file=LOGOPATH)
+        self.window = window
+        self.window.iconphoto(True, icon)
 
-        self.nodes = [[node(x=i, y=j) for i in range(4)] for j in range(4)]
+        self.main_frame = tk.Frame(self.window, bg=EMPTY_COLOR, width=404, height=404)
+        self.main_frame.place(x=0, y=OFFSET)
 
-        self.scoretext = tk.Label(text=f"Score : {self.score}", font=("ariel", 10, "bold"))
+
+        self.canvasmain = tk.Canvas(self.main_frame, width=404, height=404, bg=EMPTY_COLOR)
+        self.canvasmain.place(x=0, y=0)
+
+        self.nodes = [[node(x=i, y=j, root=self.main_frame) for i in range(4)] for j in range(4)]
+
+
+        self.scoretext = tk.Label(self.window, text=f"Score : {self.score}", font=("ariel", 10, "bold"))
         self.scoretext.place(x=10, y=5)
 
         self.nodescopy = None
@@ -188,19 +191,19 @@ class event_handler:
                     continue
                 if abs(sum(diff)) + 1 > dist:
                     initial = self.nodes[ini_pos[0]][ini_pos[1]]
-                    tk.Misc.lift(initial.canvas)
+                    tk.Misc.lift(initial.label)
                     sign = -1 if sum(diff) > 0 else 1
 
                     dx = dist if diff[1] else 0
                     dy = dist if diff[0] else 0
                     nx = ini_pos[1] * 101 - (dx * sign) + 1
-                    ny = ini_pos[0] * 101 - (dy * sign) + OFFSET + 1
+                    ny = ini_pos[0] * 101 - (dy * sign) + 1
 
-                    if not ((304 >= nx >= 1) and (304 + OFFSET >= ny >= OFFSET)):
+                    if not ((304 >= nx >= 1) and (304 >= ny >= 0)):
                         break
 
-                    tk.Misc.lift(initial.canvas)
-                    initial.canvas.place(x=nx, y=ny)
+                    tk.Misc.lift(initial.label)
+                    initial.label.place(x=nx, y=ny)
                     self.window.update()
                     moved_on_pass = True
                 else:
@@ -308,16 +311,16 @@ class event_handler:
         initial = self.nodes[ini_pos[0]][ini_pos[1]]
         final = self.nodes[fin_pos[0]][fin_pos[1]]
 
-        initial.canvas.place(x=ini_pos[1] * 101 + 1, y=ini_pos[0] * 101 + OFFSET + 1)
+        initial.label.place(x=ini_pos[1] * 101 + 1, y=ini_pos[0] * 101 + 1)
 
         if initial.value == final.value:
 
-            final.canvas["bg"] = MERGE_COLOR
+            final.label["bg"] = MERGE_COLOR
             final.value *= 2
-            final.canvas.itemconfig(final.num, font=("ARIAL", 20, "bold"), text=final.value)
+            final.label.config(font=("ARIAL", 20, "bold"), text=final.value)
 
             def merge_fn():
-                final.canvas.itemconfig(final.num, font=("ARIAL", 15, "bold"))
+                final.label.config(font=("ARIAL", 15, "bold"))
                 final.increment_val(incr=False)
 
             self.window.after(300, merge_fn)
@@ -332,8 +335,8 @@ class event_handler:
 
         initial.set_to_empty()
 
-        tk.Misc.lift(final.canvas)
-        tk.Misc.lift(initial.canvas)
+        tk.Misc.lift(final.label)
+        tk.Misc.lift(initial.label)
 
         self.window.update()
 
