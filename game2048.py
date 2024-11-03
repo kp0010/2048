@@ -1,5 +1,4 @@
 import random
-import time
 import tkinter as tk
 from config import *
 import tkinter.messagebox as tkmessagebox
@@ -8,7 +7,8 @@ from node import node
 
 def valid_move_checker(direction: str, nodes):
     dirc = direction
-    dir_ranges = {"d": ((0, 3), (0, 4)), "u": [(1, 4), (0, 4)], "l": ((0, 4), (1, 4)), "r": ((0, 4), (0, 3))}
+    dir_ranges = {"d": ((0, 3), (0, 4)), "u": [(1, 4), (0, 4)], "l": (
+        (0, 4), (1, 4)), "r": ((0, 4), (0, 3))}
     dir_add = {"d": (1, 0), "u": (-1, 0), "l": (0, -1), "r": (0, 1)}
     icur, jcur = dir_ranges[dirc]
     iadd, jadd = dir_add[dirc]
@@ -69,7 +69,6 @@ class event_handler:
         icon = tk.PhotoImage(file=LOGOPATH)
         self.window.iconphoto(True, icon)
 
-
         self.move_animating = False
 
         self.canvasmain = tk.Canvas(width=404, height=404, bg=EMPTY_COLOR)
@@ -77,7 +76,8 @@ class event_handler:
 
         self.nodes = [[node(x=i, y=j) for i in range(4)] for j in range(4)]
 
-        self.scoretext = tk.Label(text=f"Score : {self.score}", font=("ariel", 10, "bold"))
+        self.scoretext = tk.Label(
+            text=f"Score : {self.score}", font=("ariel", 10, "bold"))
         self.scoretext.place(x=10, y=5)
 
         self.nodescopy = None
@@ -148,7 +148,8 @@ class event_handler:
     def make_move(self, direction: str):
         if not valid_move_checker(direction, self.nodes):
             if not self.__check_any_valid_move():
-                self.scoretext.config(text=f"GAME OVER!  FINAL SCORE : {self.score}")
+                self.scoretext.config(
+                    text=f"GAME OVER!  FINAL SCORE : {self.score}")
 
                 result = tkmessagebox.askretrycancel(master=self.window, title="GAME OVER!",
                                                      message=f"FINAL SCORE : {self.score}", icon=tkmessagebox.INFO)
@@ -166,7 +167,8 @@ class event_handler:
         for row in self.nodes:
             newrow = []
             for enode in row:
-                newrow.append(node(x=enode.posx, y=enode.posy, value=enode.value, draw=False))
+                newrow.append(node(x=enode.posx, y=enode.posy,
+                              value=enode.value, draw=False))
             self.nodescopy.append(newrow)
 
         if direction in ("l", "r"):
@@ -212,7 +214,8 @@ class event_handler:
         self.moves = []
         self.nodescopy = []
 
-        if RENDER_NEW_NODE: self.choose_random_node()
+        if RENDER_NEW_NODE:
+            self.choose_random_node()
 
         self.move_animating = False
 
@@ -245,16 +248,19 @@ class event_handler:
 
                         finalpos = nodescopy[j + (k * sign)][i]
                         finalpos.changed_curr_pass = True
-                        self.moves.append({"initial": (j, i), "final": (j + (k * sign), i)})
+                        self.moves.append(
+                            {"initial": (j, i), "final": (j + (k * sign), i)})
                         finalpos.value, current.value = finalpos.value * 2, 0
                     else:
                         finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
-                        self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
+                        self.moves.append(
+                            {"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
                         finalpos.value, current.value = current.value, finalpos.value
 
                 else:
                     finalpos = nodescopy[j + (k * sign) - (1 * sign)][i]
-                    self.moves.append({"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
+                    self.moves.append(
+                        {"initial": (j, i), "final": (j + (k * sign) - (1 * sign), i)})
                     finalpos.value, current.value = current.value, finalpos.value
 
     def move_horizontal(self, direction, nodescopy):
@@ -286,16 +292,19 @@ class event_handler:
 
                         finalpos = nodescopy[j][i + (k * sign)]
                         finalpos.changed_curr_pass = True
-                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign))})
+                        self.moves.append(
+                            {"initial": (j, i), "final": (j, i + (k * sign))})
                         finalpos.value, current.value = finalpos.value * 2, 0
                     else:
                         finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
-                        self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
+                        self.moves.append(
+                            {"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
                         finalpos.value, current.value = current.value, finalpos.value
 
                 else:
                     finalpos = nodescopy[j][i + (k * sign) - (1 * sign)]
-                    self.moves.append({"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
+                    self.moves.append(
+                        {"initial": (j, i), "final": (j, i + (k * sign) - (1 * sign))})
                     finalpos.value, current.value = current.value, finalpos.value
 
     def move_actual(self, move):
@@ -308,13 +317,15 @@ class event_handler:
         initial = self.nodes[ini_pos[0]][ini_pos[1]]
         final = self.nodes[fin_pos[0]][fin_pos[1]]
 
-        initial.canvas.place(x=ini_pos[1] * 101 + 1, y=ini_pos[0] * 101 + OFFSET + 1)
+        initial.canvas.place(
+            x=ini_pos[1] * 101 + 1, y=ini_pos[0] * 101 + OFFSET + 1)
 
         if initial.value == final.value:
 
             final.canvas["bg"] = MERGE_COLOR
             final.value *= 2
-            final.canvas.itemconfig(final.num, font=("ARIAL", 20, "bold"), text=final.value)
+            final.canvas.itemconfig(final.num, font=(
+                "ARIAL", 20, "bold"), text=final.value)
 
             def merge_fn():
                 final.canvas.itemconfig(final.num, font=("ARIAL", 15, "bold"))
@@ -338,8 +349,10 @@ class event_handler:
         self.window.update()
 
     def __check_any_valid_move(self):
-        u, d = valid_move_checker("u", self.nodes), valid_move_checker("d", self.nodes)
-        l, r = valid_move_checker("l", self.nodes), valid_move_checker("r", self.nodes)
+        u, d = valid_move_checker(
+            "u", self.nodes), valid_move_checker("d", self.nodes)
+        l, r = valid_move_checker(
+            "l", self.nodes), valid_move_checker("r", self.nodes)
         return u or d or l or r
 
     def hard_reset(self):
